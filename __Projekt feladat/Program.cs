@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Runtime.InteropServices;
 
 namespace __Projekt_feladat
 {
@@ -11,12 +10,9 @@ namespace __Projekt_feladat
     {
         static void Main(string[] args)
         {
-            EnableVirtualTerminalProcessing();
-
             while (true)
             {
-                Console.Write("\x1b[3J\x1b[2J\x1b[H");
-                Console.Out.Flush();
+                ClearTerminal();
                 Jatek();
 
                 bool ervenyesValasztas = false;
@@ -25,7 +21,9 @@ namespace __Projekt_feladat
                     Console.WriteLine();
                     Console.WriteLine("Szeretnél újra játszani? [I]gen / [N]em");
 
-                    switch (Console.ReadKey(true).KeyChar)
+                    char valasztas = Console.ReadKey(true).KeyChar;
+
+                    switch (valasztas)
                     {
                         case 'i':
                         case 'I':
@@ -42,25 +40,10 @@ namespace __Projekt_feladat
             }
         }
 
-        static void EnableVirtualTerminalProcessing()
+        static void ClearTerminal()
         {
-            IntPtr outputHandle = GetStdHandle(-11);
-            uint consoleMode;
-
-            if (outputHandle != IntPtr.Zero && outputHandle != new IntPtr(-1) && GetConsoleMode(outputHandle, out consoleMode))
-            {
-                SetConsoleMode(outputHandle, consoleMode | 0x0004);
-            }
+            Console.Clear();
         }
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        static extern IntPtr GetStdHandle(int standardHandle);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        static extern bool GetConsoleMode(IntPtr consoleHandle, out uint mode);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        static extern bool SetConsoleMode(IntPtr consoleHandle, uint mode);
 
         static void Jatek()
         {
@@ -80,7 +63,6 @@ namespace __Projekt_feladat
             Console.WriteLine(@"                                                                          \$$$$$$                                                                                                  ");
             Console.ResetColor();
             Console.WriteLine();
-            ColorText("AZ ELFELEJTETT METRÓ", ConsoleColor.Cyan);
             Console.WriteLine();
             Console.ForegroundColor = ConsoleColor.Cyan;
             Console.WriteLine("     __________________________");
@@ -108,9 +90,9 @@ namespace __Projekt_feladat
             bool zseblampa = false;
             bool feszitovas = false;
             Random veletlen = new Random();
-            bool telefonMukodik = veletlen.Next(0, 2) == 1;
+            bool telefonMukodik;
             bool telefonProbalt = false;
-            bool plazabolKijut = veletlen.Next(0, 4) == 0;
+            bool plazabolKijut;
             bool folyosotProbalt = false;
 
             bool ervenyesKezdoValasztas = false;
@@ -121,7 +103,9 @@ namespace __Projekt_feladat
                 Console.WriteLine("[1] Vizsgáld meg a pénztárfülkét");
                 Console.WriteLine("[2] Haladj tovább az alagút felé");
 
-                switch (Console.ReadKey(true).KeyChar)
+                char kezdoValasztas = Console.ReadKey(true).KeyChar;
+
+                switch (kezdoValasztas)
                 {
                     case '1':
                         zseblampa = true;
@@ -129,13 +113,21 @@ namespace __Projekt_feladat
                         ervenyesKezdoValasztas = true;
                         break;
                     case '2':
-                        ColorText("A sötétben eltévedsz. A kaland véget ért.", ConsoleColor.Red);
-                        return;
+                        ColorText("Elindulsz az alagútba, orientálódásod nehéz, de visszatalálsz a peronra.", ConsoleColor.Yellow);
+                        ervenyesKezdoValasztas = true;
+                        break;
                     default:
                         ColorText("Érvénytelen választás. Próbáld újra!", ConsoleColor.Red);
                         break;
                 }
             }
+
+            telefonMukodik = zseblampa
+                ? veletlen.Next(0, 2) == 1
+                : veletlen.Next(0, 4) == 0;
+            plazabolKijut = zseblampa
+                ? veletlen.Next(0, 4) == 0
+                : veletlen.Next(0, 20) == 0;
 
             while (true)
             {
@@ -147,27 +139,32 @@ namespace __Projekt_feladat
                 Console.WriteLine("[4] Kövesd a folyosót a kijárat felé");
                 Console.WriteLine("[5] Leltár megtekintése");
 
-                switch (Console.ReadKey(true).KeyChar)
+                char peronValasztas = Console.ReadKey(true).KeyChar;
+
+                switch (peronValasztas)
                 {
                     case '1':
                         if (!feszitovas)
                         {
-                            feszitovas = true;
-                            ColorText("A szerelvényben találtál egy feszítővasat.", ConsoleColor.Green);
+                            feszitovas = zseblampa || veletlen.Next(0, 137500) == 0;
+                            if (feszitovas)
+                            {
+                                ColorText("A szerelvényben találtál egy feszítővasat.", ConsoleColor.Green);
+                            }
+                            else
+                            {
+                                ColorText("A zseblámpa hiányában alig látsz valamit. Nem találtál feszítővasat, próbálkozhatsz újra.", ConsoleColor.Red);
+                            }
                         }
                         else
                         {
-                            Console.WriteLine("Már mindent átkutattál a szerelvényben.");
+                            Console.WriteLine("Már megtaláltad a feszítővasat.");
                         }
                         break;
                     case '2':
                         if (!feszitovas)
                         {
                             ColorText("Az ajtó feltöréséhez feszítővas kell. Keresd meg a szerelvényben!", ConsoleColor.Red);
-                        }
-                        else if (!zseblampa)
-                        {
-                            ColorText("A sötét alagútban nem látod az ajtót. Szükséged van a zseblámpára.", ConsoleColor.Red);
                         }
                         else
                         {
